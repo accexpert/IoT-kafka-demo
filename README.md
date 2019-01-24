@@ -7,3 +7,5 @@ The application is written partially using Spring Boot and partially (intentiona
 The application requires a working Zookeeper and Kafka cluster.
 
 The tests were conducted using a cluster of three AWS EC2 machines where Zookeeper and Kafka was deployed.
+
+Also, in AWS was deployed Confluent Platform for demonstration purposes.
