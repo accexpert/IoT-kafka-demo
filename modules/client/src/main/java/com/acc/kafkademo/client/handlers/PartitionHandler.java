@@ -19,7 +19,7 @@ public class PartitionHandler implements Partitioner {
         Integer msgKey = ((Integer)key);
         LOGGER.info("Partition size: "+numberOfPartitions+"; msg key: "+msgKey);
 
-        return 0;
+        return msgKey;
     }
 
     @Override
