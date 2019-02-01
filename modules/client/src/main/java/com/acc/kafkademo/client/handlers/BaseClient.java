@@ -1,6 +1,7 @@
 package com.acc.kafkademo.client.handlers;
 
 import com.acc.kafkademo.common.models.IotMessageModel;
+import com.acc.kafkademo.common.utils.IotJsonSerializer;
 import com.acc.kafkademo.common.utils.IotSerializer;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.IntegerSerializer;
@@ -30,9 +31,10 @@ public abstract class BaseClient implements Runnable {
         Properties props = new Properties();
         props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
         props.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
-        props.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IotSerializer.class.getName());
+//        props.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IotSerializer.class.getName());
+        props.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IotJsonSerializer.class.getName());
         props.setProperty(ProducerConfig.CLIENT_ID_CONFIG, this.clientId);
-        props.setProperty(ProducerConfig.PARTITIONER_CLASS_CONFIG, PartitionHandler.class.getName());
+//        props.setProperty(ProducerConfig.PARTITIONER_CLASS_CONFIG, PartitionHandler.class.getName());
         props.setProperty(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, MessageInterceptor.class.getName());
         producer = new KafkaProducer(props);
         this.topicName = topicName;
@@ -64,8 +66,8 @@ public abstract class BaseClient implements Runnable {
         return clientId;
     }
 
-    protected void sendMessageToPartition(IotMessageModel message, Integer partitionId) {
-        ProducerRecord<Integer, IotMessageModel> record = new ProducerRecord(topicName, partitionId, message);
+    protected void sendMessageToSpecificPartition(IotMessageModel message, Integer messageKey) {
+        ProducerRecord<Integer, IotMessageModel> record = new ProducerRecord(topicName, messageKey, message);
         try {
             RecordMetadata metadata = (RecordMetadata)producer.send(record).get();
             LOGGER.info("Record sent to partition " + metadata.partition()
@@ -75,7 +77,18 @@ public abstract class BaseClient implements Runnable {
         }
     }
 
-    protected void sendMessage(IotMessageModel message) {
+    protected void sendMessageToPartitionBasedOnHash(IotMessageModel message, Integer partitionId, String messageKey) {
+        ProducerRecord<Integer, IotMessageModel> record = new ProducerRecord(topicName, partitionId, messageKey, message);
+        try {
+            RecordMetadata metadata = (RecordMetadata)producer.send(record).get();
+            LOGGER.info("Record sent to partition " + metadata.partition()
+                    + " with offset " + metadata.offset());
+        } catch (InterruptedException | ExecutionException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    protected void sendMessageRandomPartition(IotMessageModel message) {
         ProducerRecord<Integer, IotMessageModel> record = new ProducerRecord(topicName, message);
         try {
             RecordMetadata metadata = (RecordMetadata)producer.send(record).get();
