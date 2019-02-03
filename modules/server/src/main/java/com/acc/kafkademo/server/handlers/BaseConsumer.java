@@ -9,6 +9,8 @@ import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -46,6 +48,7 @@ public abstract class BaseConsumer implements Runnable {
     public final void stopConsumer() {
         LOGGER.info(this.groupName+" is stopping");
         consumer.unsubscribe();
+        consumer.close();
         isRunning = false;
     }
 
@@ -54,9 +57,11 @@ public abstract class BaseConsumer implements Runnable {
     }
 
     protected ConsumerRecords<String, IotMessageModel> getRecord() {
-        ConsumerRecords<String, IotMessageModel> records = consumer.poll(100);
-//        LOGGER.info("Number of messages: "+records.count());
-
+        ConsumerRecords<String, IotMessageModel> records = consumer.poll(Duration.of(1000, ChronoUnit.MILLIS));
         return records;
+    }
+
+    public KafkaConsumer<String, IotMessageModel> getConsumer() {
+        return consumer;
     }
 }
